@@ -3,9 +3,12 @@ package webproject.bank;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -67,7 +70,86 @@ public class webServlet extends HttpServlet {
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		// TODO Auto-generated method stub
-		response.getWriter().append("Served at: ").append(request.getContextPath());
+		// response.getWriter().append("Served at: ").append(request.getContextPath());
+
+		//know what page we are on
+		HttpSession session = request.getSession();
+		String pageValue = (String)session.getAttribute("value");
+
+		if (pageValue.equalsIgnoreCase("custStatus")) {
+			//Connect to DB
+			String url = "jdbc:oracle:thin:@localhost:1521:xe";
+			String user = "system";
+			String password = "12345";
+			
+			//loading driver
+			Class.forName("oracle.jdbc.driver.OracleDriver");
+			
+			//getting connection
+			Connection con = DriverManager.getConnection(url, user, password);
+
+			ArrayList list = new ArrayList();
+
+			Statement stmt = con.createStatement();
+			ResultSet rs = stmt.executeQuery("SELECT * FROM tbl_Customer");
+			
+			while (rs.next()) {
+				String name = rs.getString("customerName");
+				String status = rs.getString("status");
+				String msg = rs.getString("msg");
+				String lastUpdated = rs.getString("lastUpdated");
+
+				Customer cust = new Customer(name, status, msg, lastUpdated);
+				list.add(cust);
+			}
+
+			request.setAttribute("customers", list);
+			RequestDispatcher view = request.getRequestDispatcher("customerStatus.jsp");
+			view.forward(request, response);
+
+			rs.close();
+			stmt.close();
+
+		} else if (pageValue.equalsIgnoreCase("accStatus")) {
+			//Connect to DB
+			String url = "jdbc:oracle:thin:@localhost:1521:xe";
+			String user = "system";
+			String password = "12345";
+			
+			//loading driver
+			Class.forName("oracle.jdbc.driver.OracleDriver");
+			
+			//getting connection
+			Connection con = DriverManager.getConnection(url, user, password);
+
+			ArrayList list = new ArrayList();
+
+			Statement stmt = con.createStatement();
+			ResultSet rs = stmt.executeQuery("SELECT * FROM tbl_Account");
+			
+			while (rs.next()) {
+				int id = rs.getInt("id");
+				String type = rs.getString("type");
+				String status = rs.getString("status");
+				String msg = rs.getString("msg");
+				String lastUpdated = rs.getString("lastUpdated");
+
+				Account acc = new Account(id, type, status, msg, lastUpdated);
+				list.add(acc);
+			}
+
+			request.setAttribute("accounts", list);
+			RequestDispatcher view = request.getRequestDispatcher("accountStatus.jsp");
+			view.forward(request, response);
+
+			rs.close();
+			stmt.close();
+
+		} else {
+
+		}
+
+
 	}
 
 	/**
@@ -79,7 +161,6 @@ public class webServlet extends HttpServlet {
 		//know what page we are on
 		HttpSession session = request.getSession();
 		String pageValue = (String)session.getAttribute("value");
-		
 		
 		//Controls the executive Login
 		if(pageValue.equalsIgnoreCase("execLogIn")){
